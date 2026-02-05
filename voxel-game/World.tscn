@@ -1,18 +1,11 @@
 [gd_scene format=3 uid="uid://lmaog24dmxgm"]
 
-[ext_resource type="Script" uid="uid://dlmajvjgjvivu" path="res://World Generation/scripts/world_generator.gd" id="1_c6gwx"]
+[ext_resource type="Script" uid="uid://4eaatx3bdno4" path="res://World Generation/scripts/world.gd" id="1_c6gwx"]
 
-[node name="World" type="Node3D" unique_id=884193583]
-
-[node name="WorldGenerator" type="Node3D" parent="." unique_id=179362318]
+[node name="World" type="Node3D" unique_id=2041729610]
 script = ExtResource("1_c6gwx")
-metadata/_custom_type_script = "uid://dlmajvjgjvivu"
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=451104144]
-transform = Transform3D(0.99894506, 0.008259648, 0.045172, -0.026173454, -0.705856, 0.70787156, 0.037731703, -0.7083072, -0.7048953, 0, 471.04562, -1.2408285)
-
-[node name="CameraRig" type="Node3D" parent="." unique_id=415786598]
-transform = Transform3D(0.70710677, -0.4055798, 0.579228, 0, 0.81915206, 0.57357645, -0.70710677, -0.4055798, 0.579228, 30, 30, 30)
-
-[node name="Camera3D" type="Camera3D" parent="CameraRig" unique_id=221495676]
-current = true
+chunk_size = null
+chunk_height = null
+voxel_size = null
+world_seed = null
+chunks_radius = null
