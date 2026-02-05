@@ -22,11 +22,17 @@ func _ready() -> void:
 	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	noise.frequency = 0.02
 	
-	#if surface_generator == null:
-		#printerr("SurfaceGenerator not assigned!")
-		#return
+	if surface_generator == null:
+		printerr("SurfaceGenerator not assigned!")
+		return
 	
 	generate_initial_chunks()
+	
+	#DEBUG
+	print("Generated ", chunks.size(), " Chunks")
+	for coord in chunks.keys():
+		var chunk_pos = Vector3(coord.x * chunk_size, 0, coord.y * chunk_size)
+		print("Chunk ", coord, " at world pos: ", chunk_pos)
 
 func generate_initial_chunks() -> void:
 	for cx in range(-chunks_radius, chunks_radius + 1):
@@ -38,9 +44,9 @@ func generate_chunk(chunk_coord: Vector2i) -> void:
 	if chunks.has(chunk_coord):
 		return
 	
-	#var voxels: Array = surface_generator.generate_chunk(self, chunk_coord)
-	#set_chunk_data(chunk_coord, voxels)
-	#spawn_chunk(chunk_coord)
+	var voxels: Array = surface_generator.generate_chunk(self, chunk_coord)
+	set_chunk_data(chunk_coord, voxels)
+	spawn_chunk(chunk_coord)
 
 func set_chunk_data(chunk_coord: Vector2i, voxel_data: Array) -> void:
 	chunks[chunk_coord] = voxel_data
@@ -68,5 +74,7 @@ func get_block(world_pos: Vector3i) -> int:
 	return voxels[lx][lz][ly]
 
 func spawn_chunk(chunk_coord: Vector2i) -> void:
-	# Chunk.tscn will be created next
-	push_error("Chunk.tscn not created yet - skipping spawn")
+	var chunk_scene: PackedScene = preload("res://Chunk.tscn")
+	var chunk: Chunk = chunk_scene.instantiate()
+	chunk.setup(chunk_coord, self)  # ← Use the parameter
+	add_child(chunk)

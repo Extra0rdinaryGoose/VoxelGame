@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://d2k3d0ns4ort4"]
+
+[ext_resource type="Script" uid="uid://br100dtttgk3p" path="res://World Generation/scripts/Chunk.gd" id="1_lexys"]
+
+[node name="Chunk" type="Node3D" unique_id=2054093099]
+script = ExtResource("1_lexys")

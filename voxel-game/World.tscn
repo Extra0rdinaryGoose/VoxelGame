@@ -1,11 +1,15 @@
 [gd_scene format=3 uid="uid://lmaog24dmxgm"]
 
-[ext_resource type="Script" uid="uid://4eaatx3bdno4" path="res://World Generation/scripts/world.gd" id="1_c6gwx"]
+[ext_resource type="Script" uid="uid://4eaatx3bdno4" path="res://World Generation/scripts/World.gd" id="1_c6gwx"]
+[ext_resource type="Resource" uid="uid://cchn4u41k8ykw" path="res://World Generation/generators/SurfaceGenerator.tres" id="2_2dftf"]
 
 [node name="World" type="Node3D" unique_id=2041729610]
 script = ExtResource("1_c6gwx")
-chunk_size = null
-chunk_height = null
-voxel_size = null
-world_seed = null
-chunks_radius = null
+surface_generator = ExtResource("2_2dftf")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=333021541]
+transform = Transform3D(1, 0, 0, 0, 0.8660254, 0.5, 0, -0.5, 0.8660254, 8, 68, 63)
+current = true
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=422583818]
+transform = Transform3D(1, 0, 0, 0, -0.012112246, 0.9999266, 0, -0.9999266, -0.012112246, 0, 0, 0)
