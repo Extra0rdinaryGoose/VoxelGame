@@ -31,7 +31,7 @@ func setup(coord: Vector2i, world_ref: World) -> void:
 	name = "Chunk_%d_%d" % [coord.x, coord.y]
 	build_mesh()
 
-func build_mesh_arrays(voxels: Array, origin: Vector3i) -> Array:
+func build_mesh_arrays(voxels: Array, _origin: Vector3i) -> Array:
 	var vertices: PackedVector3Array = PackedVector3Array()
 	var normals: PackedVector3Array = PackedVector3Array()
 	var uvs: PackedVector2Array = PackedVector2Array()
@@ -39,82 +39,73 @@ func build_mesh_arrays(voxels: Array, origin: Vector3i) -> Array:
 	var colors: PackedColorArray = PackedColorArray()
 
 	var face_uvs: Array[Vector2] = [
-		Vector2(0, 0), Vector2(1, 0),
-		Vector2(1, 1), Vector2(0, 1)
+		Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)
 	]
 
-	var face_count: int = 0
+	# CORRECTED: Vertex winding for Godot's clockwise culling
+	# Faces are: Right, Left, Top, Bottom, Front, Back
+	var local_face_vertices: Array[Array] = [
+		[Vector3(1, 0, 0), Vector3(1, 1, 0), Vector3(1, 1, 1), Vector3(1, 0, 1)], # Right
+		[Vector3(0, 0, 1), Vector3(0, 1, 1), Vector3(0, 1, 0), Vector3(0, 0, 0)], # Left
+		[Vector3(0, 1, 1), Vector3(1, 1, 1), Vector3(1, 1, 0), Vector3(0, 1, 0)], # Top
+		[Vector3(0, 0, 0), Vector3(1, 0, 0), Vector3(1, 0, 1), Vector3(0, 0, 1)], # Bottom (Floor)
+		[Vector3(0, 0, 1), Vector3(1, 0, 1), Vector3(1, 1, 1), Vector3(0, 1, 1)], # Front
+		[Vector3(1, 0, 0), Vector3(0, 0, 0), Vector3(0, 1, 0), Vector3(1, 1, 0)]  # Back
+	]
 
 	for x in range(world.chunk_size):
 		for z in range(world.chunk_size):
-			var column: Array = voxels[x]
 			for y in range(world.chunk_height):
-				var block_id: int = column[z][y]
-				#print("Voxel ", x, ",", z, ",", y, " = ", block_id)
+				var block_id: int = voxels[x][z][y]
 				if block_id == world.BLOCK_AIR:
 					continue
 
-				var voxel_world_pos: Vector3i = Vector3i(
-					origin.x + x, origin.y + y, origin.z + z
-				)
-
+				# Check all 6 directions to decide which faces to draw
 				for i in range(6):
 					var dir: Vector3i = directions[i]
-					var neighbor_pos: Vector3i = voxel_world_pos + dir
-					var lx: int = neighbor_pos.x - origin.x
-					var ly: int = neighbor_pos.y
-					var lz: int = neighbor_pos.z - origin.z
-
+					var neighbor_pos: Vector3i = Vector3i(x, y, z) + dir
 					var neighbor_id: int = world.BLOCK_AIR
-					if (lx >= 0 and lx < world.chunk_size and 
-						ly >= 0 and ly < world.chunk_height and 
-						lz >= 0 and lz < world.chunk_size):
-						neighbor_id = voxels[lx][lz][ly]
-					
-					if i == 2:
-						pass
-					else:
-						if neighbor_id != world.BLOCK_AIR:
-							continue
 
-					if neighbor_id == world.BLOCK_AIR:
-						pass
+					# Check local chunk data first for efficiency
+					if (neighbor_pos.x >= 0 and neighbor_pos.x < world.chunk_size and 
+						neighbor_pos.y >= 0 and neighbor_pos.y < world.chunk_height and 
+						neighbor_pos.z >= 0 and neighbor_pos.z < world.chunk_size):
+						neighbor_id = voxels[neighbor_pos.x][neighbor_pos.z][neighbor_pos.y]
 					else:
+						# If neighbor is outside this chunk, check the world map
+						var world_neighbor = Vector3i(_origin.x + x, y, _origin.z + z) + dir
+						neighbor_id = world.get_block(world_neighbor)
+
+					# Only draw the face if it touches Air (transparency check)
+					if neighbor_id != world.BLOCK_AIR:
 						continue
 
 					var base_index: int = vertices.size()
-					var fv: Array = face_vertices[i]
+					var fv: Array = local_face_vertices[i]
 					var normal: Vector3 = face_normals[i]
 
+					# Generate the 4 vertices for this quad
 					for v in range(4):
-						var pos: Vector3 = Vector3(voxel_world_pos) + fv[v] * world.voxel_size
+						# Use LOCAL x,y,z so the Chunk node handles the world position
+						var pos: Vector3 = Vector3(x, y, z) + fv[v]
 						vertices.append(pos)
 						normals.append(normal)
 						uvs.append(face_uvs[v])
 
+						# Apply basic vertex colors
 						match block_id:
-							world.BLOCK_GRASS:
-								colors.append(Color(0.3, 0.6, 0.3))
-							world.BLOCK_DIRT:
-								colors.append(Color(0.5, 0.4, 0.2))
-							world.BLOCK_STONE:
-								colors.append(Color(0.5, 0.5, 0.5))
-							_:
-								colors.append(Color.GRAY)
+							world.BLOCK_GRASS: colors.append(Color(0.2, 0.8, 0.2))
+							world.BLOCK_DIRT:  colors.append(Color(0.4, 0.3, 0.1))
+							world.BLOCK_STONE: colors.append(Color(0.5, 0.5, 0.5))
+							_:                 colors.append(Color.WHITE)
 
+					# Add indices for two triangles forming the quad
 					indices.append(base_index + 0)
 					indices.append(base_index + 1)
 					indices.append(base_index + 2)
 					indices.append(base_index + 0)
 					indices.append(base_index + 2)
 					indices.append(base_index + 3)
-
-					face_count += 1
-
-	print("Chunk ", chunk_coord, " faces: ", face_count, ", verts: ", vertices.size())
-
-	if vertices.is_empty():
-		return []
 
 	var arrays: Array = []
 	arrays.resize(Mesh.ARRAY_MAX)
